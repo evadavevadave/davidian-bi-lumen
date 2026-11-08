@@ -1,0 +1,20 @@
+@prefix lv2:  <http://lv2plug.in/ns/lv2core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ui:   <http://lv2plug.in/ns/extensions/ui#> .
+
+<urn:davidian:bi-lumen>
+	a lv2:Plugin ;
+	lv2:binary <bi_lumen.dll> ;
+	rdfs:seeAlso <bi_lumen.ttl> .
+
+# UI-BEGIN (CMake removes this block on platforms without a window layer)
+<urn:davidian:bi-lumen>
+	ui:ui <urn:davidian:bi-lumen#ui> .
+
+<urn:davidian:bi-lumen#ui>
+	a ui:WindowsUI ;
+	ui:binary <bi_lumen_ui.dll> ;
+	lv2:requiredFeature ui:parent ;
+	lv2:optionalFeature ui:resize , ui:idleInterface ;
+	lv2:extensionData ui:idleInterface .
+# UI-END

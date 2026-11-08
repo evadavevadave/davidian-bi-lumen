@@ -1,0 +1,244 @@
+@prefix doap:  <http://usefulinc.com/ns/doap#> .
+@prefix lv2:   <http://lv2plug.in/ns/lv2core#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix pprop: <http://lv2plug.in/ns/ext/port-props#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix units: <http://lv2plug.in/ns/extensions/units#> .
+
+<urn:davidian:bi-lumen>
+	a lv2:Plugin , lv2:PhaserPlugin ;
+	doap:name "Davidian Bi-Lumen" ;
+	doap:license <https://spdx.org/licenses/GPL-3.0-or-later> ;
+	rdfs:comment "Circuit model of a dual six-stage LDR phaser, from a DIY clone schematic (f.aiseur, rev 002): two phasors with regeneration, two triangle/square sweep generators, opto LED drivers and LDR footswitch bypass. GPL-3.0-or-later. Made with generative AI (Claude Code); see AI_USAGE.md in the bundle." ;
+	lv2:minorVersion 0 ;
+	lv2:microVersion 0 ;
+	lv2:optionalFeature lv2:hardRTCapable ;
+	lv2:port [
+		a lv2:AudioPort , lv2:InputPort ;
+		lv2:index 0 ;
+		lv2:symbol "in_a" ;
+		lv2:name "In A"
+	] , [
+		a lv2:AudioPort , lv2:InputPort ;
+		lv2:index 1 ;
+		lv2:symbol "in_b" ;
+		lv2:name "In B"
+	] , [
+		a lv2:AudioPort , lv2:OutputPort ;
+		lv2:index 2 ;
+		lv2:symbol "out_a" ;
+		lv2:name "Out A"
+	] , [
+		a lv2:AudioPort , lv2:OutputPort ;
+		lv2:index 3 ;
+		lv2:symbol "out_b" ;
+		lv2:name "Out B"
+	] , [
+		a lv2:ControlPort , lv2:InputPort ;
+		lv2:index 4 ;
+		lv2:symbol "rate1" ;
+		lv2:name "Sweep 1 Rate" ;
+		lv2:default 0.5 ;
+		lv2:minimum 0.1 ;
+		lv2:maximum 18.0 ;
+		lv2:portProperty pprop:logarithmic ;
+		units:unit units:hz
+	] , [
+		a lv2:ControlPort , lv2:InputPort ;
+		lv2:index 5 ;
+		lv2:symbol "shape1" ;
+		lv2:name "Sweep 1 Shape" ;
+		lv2:default 0 ;
+		lv2:minimum 0 ;
+		lv2:maximum 1 ;
+		lv2:portProperty lv2:integer , lv2:enumeration ;
+		lv2:scalePoint [ rdfs:label "Sine" ; rdf:value 0 ] , [ rdfs:label "Square" ; rdf:value 1 ]
+	] , [
+		a lv2:ControlPort , lv2:InputPort ;
+		lv2:index 6 ;
+		lv2:symbol "rate1_src" ;
+		lv2:name "Sweep 1 Rate Control" ;
+		lv2:default 0 ;
+		lv2:minimum 0 ;
+		lv2:maximum 1 ;
+		lv2:portProperty lv2:integer , lv2:enumeration ;
+		lv2:scalePoint [ rdfs:label "Knob" ; rdf:value 0 ] , [ rdfs:label "Pedal" ; rdf:value 1 ]
+	] , [
+		a lv2:ControlPort , lv2:InputPort ;
+		lv2:index 7 ;
+		lv2:symbol "rate2" ;
+		lv2:name "Sweep 2 Rate" ;
+		lv2:default 0.3 ;
+		lv2:minimum 0.1 ;
+		lv2:maximum 18.0 ;
+		lv2:portProperty pprop:logarithmic ;
+		units:unit units:hz
+	] , [
+		a lv2:ControlPort , lv2:InputPort ;
+		lv2:index 8 ;
+		lv2:symbol "shape2" ;
+		lv2:name "Sweep 2 Shape" ;
+		lv2:default 0 ;
+		lv2:minimum 0 ;
+		lv2:maximum 1 ;
+		lv2:portProperty lv2:integer , lv2:enumeration ;
+		lv2:scalePoint [ rdfs:label "Sine" ; rdf:value 0 ] , [ rdfs:label "Square" ; rdf:value 1 ]
+	] , [
+		a lv2:ControlPort , lv2:InputPort ;
+		lv2:index 9 ;
+		lv2:symbol "depth_a" ;
+		lv2:name "Phasor A Depth" ;
+		lv2:default 0.8 ;
+		lv2:minimum 0.0 ;
+		lv2:maximum 1.0
+	] , [
+		a lv2:ControlPort , lv2:InputPort ;
+		lv2:index 10 ;
+		lv2:symbol "feedback_a" ;
+		lv2:name "Phasor A Feedback" ;
+		lv2:default 0.0 ;
+		lv2:minimum 0.0 ;
+		lv2:maximum 1.0
+	] , [
+		a lv2:ControlPort , lv2:InputPort ;
+		lv2:index 11 ;
+		lv2:symbol "depth_b" ;
+		lv2:name "Phasor B Depth" ;
+		lv2:default 0.8 ;
+		lv2:minimum 0.0 ;
+		lv2:maximum 1.0
+	] , [
+		a lv2:ControlPort , lv2:InputPort ;
+		lv2:index 12 ;
+		lv2:symbol "feedback_b" ;
+		lv2:name "Phasor B Feedback" ;
+		lv2:default 0.0 ;
+		lv2:minimum 0.0 ;
+		lv2:maximum 1.0
+	] , [
+		a lv2:ControlPort , lv2:InputPort ;
+		lv2:index 13 ;
+		lv2:symbol "sweep_a" ;
+		lv2:name "Phasor A Sweep" ;
+		lv2:default 0 ;
+		lv2:minimum 0 ;
+		lv2:maximum 1 ;
+		lv2:portProperty lv2:integer , lv2:enumeration ;
+		lv2:scalePoint [ rdfs:label "Gen 1" ; rdf:value 0 ] , [ rdfs:label "Pedal" ; rdf:value 1 ]
+	] , [
+		a lv2:ControlPort , lv2:InputPort ;
+		lv2:index 14 ;
+		lv2:symbol "sweep_b" ;
+		lv2:name "Phasor B Sweep" ;
+		lv2:default 0 ;
+		lv2:minimum 0 ;
+		lv2:maximum 2 ;
+		lv2:portProperty lv2:integer , lv2:enumeration ;
+		lv2:scalePoint [ rdfs:label "Gen 1" ; rdf:value 0 ] , [ rdfs:label "Gen 2" ; rdf:value 1 ] , [ rdfs:label "Pedal" ; rdf:value 2 ]
+	] , [
+		a lv2:ControlPort , lv2:InputPort ;
+		lv2:index 15 ;
+		lv2:symbol "sync" ;
+		lv2:name "Sweep Sync" ;
+		lv2:default 0 ;
+		lv2:minimum 0 ;
+		lv2:maximum 1 ;
+		lv2:portProperty lv2:integer , lv2:enumeration ;
+		lv2:scalePoint [ rdfs:label "Normal" ; rdf:value 0 ] , [ rdfs:label "Reverse" ; rdf:value 1 ]
+	] , [
+		a lv2:ControlPort , lv2:InputPort ;
+		lv2:index 16 ;
+		lv2:symbol "b_input" ;
+		lv2:name "Phasor B Input" ;
+		lv2:default 1 ;
+		lv2:minimum 0 ;
+		lv2:maximum 2 ;
+		lv2:portProperty lv2:integer , lv2:enumeration ;
+		lv2:scalePoint [ rdfs:label "In A" ; rdf:value 0 ] , [ rdfs:label "Out A" ; rdf:value 1 ] , [ rdfs:label "In B" ; rdf:value 2 ]
+	] , [
+		a lv2:ControlPort , lv2:InputPort ;
+		lv2:index 17 ;
+		lv2:symbol "on_a" ;
+		lv2:name "Phasor A On" ;
+		lv2:default 1 ;
+		lv2:minimum 0 ;
+		lv2:maximum 1 ;
+		lv2:portProperty lv2:toggled
+	] , [
+		a lv2:ControlPort , lv2:InputPort ;
+		lv2:index 18 ;
+		lv2:symbol "on_b" ;
+		lv2:name "Phasor B On" ;
+		lv2:default 1 ;
+		lv2:minimum 0 ;
+		lv2:maximum 1 ;
+		lv2:portProperty lv2:toggled
+	] , [
+		a lv2:ControlPort , lv2:InputPort ;
+		lv2:index 19 ;
+		lv2:symbol "pedal" ;
+		lv2:name "Pedal" ;
+		lv2:default 0.5 ;
+		lv2:minimum 0.0 ;
+		lv2:maximum 1.0
+	] , [
+		a lv2:ControlPort , lv2:InputPort ;
+		lv2:index 20 ;
+		lv2:symbol "center_a" ;
+		lv2:name "Center A Trim" ;
+		lv2:default 0.15 ;
+		lv2:minimum 0.0 ;
+		lv2:maximum 1.0
+	] , [
+		a lv2:ControlPort , lv2:InputPort ;
+		lv2:index 21 ;
+		lv2:symbol "center_b" ;
+		lv2:name "Center B Trim" ;
+		lv2:default 0.15 ;
+		lv2:minimum 0.0 ;
+		lv2:maximum 1.0
+	] , [
+		a lv2:ControlPort , lv2:InputPort ;
+		lv2:index 22 ;
+		lv2:symbol "volts" ;
+		lv2:name "Volts at 0 dBFS" ;
+		lv2:default 1.0 ;
+		lv2:minimum 0.1 ;
+		lv2:maximum 10.0 ;
+		lv2:portProperty pprop:logarithmic
+	] , [
+		a lv2:ControlPort , lv2:InputPort ;
+		lv2:index 23 ;
+		lv2:symbol "output" ;
+		lv2:name "Output" ;
+		lv2:default 0.0 ;
+		lv2:minimum -24.0 ;
+		lv2:maximum 12.0 ;
+		units:unit units:db
+	] , [
+		a lv2:ControlPort , lv2:InputPort ;
+		lv2:index 24 ;
+		lv2:symbol "enabled" ;
+		lv2:name "Enabled" ;
+		lv2:default 1 ;
+		lv2:minimum 0 ;
+		lv2:maximum 1 ;
+		lv2:designation lv2:enabled ;
+		lv2:portProperty lv2:toggled
+	] , [
+		a lv2:ControlPort , lv2:OutputPort ;
+		lv2:index 25 ;
+		lv2:symbol "led_a" ;
+		lv2:name "Opto LED A" ;
+		lv2:minimum 0.0 ;
+		lv2:maximum 1.0 ;
+		lv2:portProperty pprop:notOnGUI
+	] , [
+		a lv2:ControlPort , lv2:OutputPort ;
+		lv2:index 26 ;
+		lv2:symbol "led_b" ;
+		lv2:name "Opto LED B" ;
+		lv2:minimum 0.0 ;
+		lv2:maximum 1.0 ;
+		lv2:portProperty pprop:notOnGUI
+	] .

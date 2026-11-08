@@ -1,6 +1,6 @@
 # Davidian Bi-Lumen
 
-A Davidian LV2 circuit model of a DIY clone schematic by f.aiseur (rev 002, 2025-01-25). It has two six-stage LDR phasors with regeneration, two triangle/square sweep generators, the opto LED drivers, and LDR footswitch bypass. Stereo in and out (A and B), no latency.
+A Davidian LV2 circuit model of a classic dual opto phaser, simulated part by part from its schematic. It has two six-stage LDR phasors with regeneration, two triangle/square sweep generators, the opto LED drivers, and LDR footswitch bypass. Stereo in and out (A and B), no latency.
 
 Free software under the GNU GPL, version 3 or later: see [LICENSE](LICENSE), and [NOTICE.md](NOTICE.md) for third-party licences and sources. **Made with generative AI** (Claude Code): see [AI_USAGE.md](AI_USAGE.md). The build copies all three files into the bundle.
 

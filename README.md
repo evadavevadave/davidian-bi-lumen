@@ -15,33 +15,59 @@ build-test\ui_check.exe build\bi_lumen.lv2
 
 `build.bat` needs Visual Studio's C++ tools. `lilv_check.exe` checks the bundle with the lilv LV2 parser without installing anything. `ui_check.exe` hosts the GUI in a window and drives it with mouse messages.
 
+## Download
+
+Ready-made bundles for every platform are on the [Releases page](https://github.com/evadavevadave/davidian-bi-lumen/releases/latest):
+
+| File | For |
+|---|---|
+| `Davidian-Bi-Lumen-<version>-windows-x64.zip` | 64-bit Windows 10 and 11 |
+| `Davidian-Bi-Lumen-<version>-macos-universal.zip` | macOS 10.13 and later, Apple silicon and Intel |
+| `Davidian-Bi-Lumen-<version>-linux-x64.zip` | 64-bit Linux on x86 (glibc 2.35 or later, X11 or XWayland for the GUI) |
+| `Davidian-Bi-Lumen-<version>-linux-arm64.zip` | 64-bit Linux on ARM, such as a Raspberry Pi 4 or 5 with a 64-bit OS |
+
+GitHub Actions builds and tests all four from the same source on every push (`.github/workflows/build.yml`), and publishes them when a version is tagged.
+
 ## Install
 
-Copy the whole `build/bi_lumen.lv2` folder (the plugin and GUI libraries and the two .ttl files) into one of the standard LV2 folders:
+Unzip the download, or build it yourself (below). Then copy the whole `bi_lumen.lv2` folder (the plugin and GUI libraries, the two .ttl files and the licence files) into one of the standard LV2 folders:
 
 - Windows: `%APPDATA%\LV2` (current user) or `%COMMONPROGRAMFILES%\LV2` (all users)
 - Linux: `~/.lv2` (current user) or `/usr/local/lib/lv2` (all users)
 - macOS: `~/Library/Audio/Plug-Ins/LV2`
 
+On macOS the libraries are not notarised, so macOS quarantines them when the zip is downloaded with a browser. Clear that once after copying, in Terminal:
+
+```
+xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/LV2/bi_lumen.lv2
+```
+
 If your host doesn't scan that folder, add it to the host's LV2 search path or set the `LV2_PATH` environment variable. Close the host before copying and restart it afterwards. Replace any older copy instead of keeping two: when two bundles have the same URI, the loader uses one and ignores the other.
 
 Look for **Davidian Bi-Lumen** in your host's plugin list. The plugin URI is `urn:davidian:bi-lumen`. It changed in the 2026-11 rename, so sessions saved before then need the plugin re-inserted.
 
-## Other platforms
+## Build on any platform with CMake
 
 ```
-cmake -S . -B build-cmake
+cmake -S . -B build-cmake -DCMAKE_BUILD_TYPE=Release
 cmake --build build-cmake --config Release
 ctest --test-dir build-cmake -C Release
+cmake --install build-cmake --prefix ~/.lv2 -DLV2_INSTALL_DIR=.
 ```
 
-The libraries get the right name for each platform (`.dll`, `.so` or `.dylib`). The code is plain C11 and needs no LV2 SDK. The Linux GUI needs the X11 development headers (`libx11-dev`). Only the Windows build has been compiled and tested.
+The last line is optional: it copies the bundle into `~/.lv2` (Linux). Without `-DLV2_INSTALL_DIR=.`, `cmake --install` puts it in `<prefix>/lib/lv2`.
+
+- **Windows:** Visual Studio 2017 or later with the C++ tools. `build.bat` does the same without CMake and also builds the Windows-only checks.
+- **macOS:** the Xcode command line tools. Add `-DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"` for a universal build.
+- **Linux:** gcc or clang, plus the X11 development headers (`sudo apt install libx11-dev`) for the GUI. Without them CMake builds the plugin alone.
+
+The code is plain C11 (the macOS window layer is compiled as Objective-C) and needs no LV2 SDK or other libraries. The libraries get the right name for each platform (`.dll`, `.so` or `.dylib`), and the manifest names the right GUI type.
 
 ## GUI
 
 ![GUI](docs/gui.png)
 
-The bundle includes a native GUI (`bi_lumen_ui.dll`). It has no dependencies: it draws with its own anti-aliased software renderer and stroke font, and puts the result in a Win32 window (`ui:WindowsUI` on Windows) or an X11 window (`ui:X11UI` on Linux). macOS has no window layer yet, so CMake leaves the GUI out there and hosts show their generic controls.
+The bundle includes a native GUI (`bi_lumen_ui`). It has no dependencies: it draws with its own anti-aliased software renderer and stroke font, and shows the result in a Win32 window on Windows (`ui:WindowsUI`), an NSView on macOS (`ui:CocoaUI`) or an X11 window on Linux (`ui:X11UI`). All three share the same drawing and mouse code in `src/ui/panel.h`.
 
 - Drag a knob up or down to turn it. Hold Shift for fine control. Double-click resets it, and the mouse wheel works too.
 - Click the upper, middle or lower part of a toggle to pick that position.
@@ -131,9 +157,10 @@ These are estimates. Tune them by ear, or measure your own parts:
 | `src/ports.h` | Port numbers shared by the plugin and the GUI |
 | `src/ui/panel.h` | GUI layout, drawing and mouse handling, with no platform code |
 | `src/ui/canvas.h`, `src/ui/font.h` | Software renderer and stroke font |
-| `src/ui/ui_lv2.c` | LV2 UI entry points and the Win32 and X11 window layers |
+| `src/ui/ui_lv2.c` | LV2 UI entry points and the Win32, Cocoa and X11 window layers |
 | `src/lv2_abi.h` | The LV2 C interface, so no SDK is needed |
 | `bundle/` | LV2 metadata |
+| `.github/workflows/build.yml` | Builds, tests and packages Windows, macOS and Linux bundles on GitHub Actions |
 | `LICENSE`, `NOTICE.md`, `AI_USAGE.md` | GPL-3.0 text, third-party licences and sources, AI usage statement |
 | `test/test_dsp.c` | Transfer function, sweep rates and sweep range checks, plus tests of the built library |
 | `test/lilv_check.c` | Checks the bundle with the lilv LV2 parser (Windows only) |

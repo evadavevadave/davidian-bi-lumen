@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
  * Copyright (C) 2026 Davidian. See LICENSE and NOTICE.md. */
 /* LV2 GUI for the Bi-Lumen: the LV2 UI entry points plus a thin window layer
- * for Win32 (ui:WindowsUI) and X11 (ui:X11UI). Everything else is in panel.h, which knows
+ * for Win32 (ui:WindowsUI), Cocoa (ui:CocoaUI) and X11 (ui:X11UI). Everything else is in panel.h, which knows
  * nothing about windows. The UI ABI is declared here so no LV2 SDK is needed. */
 #include <stdint.h>
 #include <stdlib.h>
@@ -319,8 +319,158 @@ static int window_idle(UI* ui)
     return 0;
 }
 
+/* ---- Window layer: Cocoa (macOS) ----
+ * The build compiles this file as Objective-C on macOS, without ARC. */
+#elif defined(__APPLE__)
+#    import <Cocoa/Cocoa.h>
+
+struct UI {
+    Panel panel;
+    LV2UI_Write_Function write;
+    LV2UI_Controller controller;
+    void* view; /* DavidianBiLumenView, retained */
+};
+
+/* Objective-C class names are global to the process, so this one carries the brand and
+ * model to stay clear of other plugins. */
+@interface DavidianBiLumenView : NSView {
+@public
+    UI* ui;
+    NSTimer* timer;
+}
+@end
+
+@implementation DavidianBiLumenView
+
+- (BOOL)isFlipped { return YES; } /* y grows downwards, as in panel.h */
+- (BOOL)acceptsFirstMouse:(NSEvent*)e { (void)e; return YES; }
+- (BOOL)acceptsFirstResponder { return YES; }
+
+- (void)drawRect:(NSRect)dirty
+{
+    CGContextRef ctx;
+    CGColorSpaceRef cs;
+    CGDataProviderRef dp;
+    CGImageRef img;
+    (void)dirty;
+    if (!ui)
+        return;
+    if (ui->panel.dirty)
+        panel_draw(&ui->panel);
+    ctx = [[NSGraphicsContext currentContext] CGContext];
+    cs = CGColorSpaceCreateDeviceRGB();
+    dp = CGDataProviderCreateWithData(NULL, ui->panel.px, (size_t)PANEL_W * PANEL_H * 4, NULL);
+    /* 0x00RRGGBB words: little-endian 32-bit with the unused byte first. */
+    img = CGImageCreate(PANEL_W, PANEL_H, 8, 32, (size_t)PANEL_W * 4, cs,
+                        kCGBitmapByteOrder32Little | (CGBitmapInfo)kCGImageAlphaNoneSkipFirst, dp,
+                        NULL, false, kCGRenderingIntentDefault);
+    if (img) {
+        /* The view is flipped, so flip back for the image, which Quartz draws bottom-up. */
+        CGContextSaveGState(ctx);
+        CGContextTranslateCTM(ctx, 0, PANEL_H);
+        CGContextScaleCTM(ctx, 1, -1);
+        CGContextSetInterpolationQuality(ctx, kCGInterpolationNone);
+        CGContextDrawImage(ctx, CGRectMake(0, 0, PANEL_W, PANEL_H), img);
+        CGContextRestoreGState(ctx);
+        CGImageRelease(img);
+    }
+    CGDataProviderRelease(dp);
+    CGColorSpaceRelease(cs);
+}
+
+- (NSPoint)panelPoint:(NSEvent*)e
+{
+    return [self convertPoint:[e locationInWindow] fromView:nil];
+}
+
+static int shift_held(NSEvent* e) { return ([e modifierFlags] & NSEventModifierFlagShift) != 0; }
+
+- (void)mouseDown:(NSEvent*)e
+{
+    const NSPoint p = [self panelPoint:e];
+    if (!ui) return;
+    panel_mouse_down(&ui->panel, (float)p.x, (float)p.y, [e clickCount] == 2);
+    ui_redraw(ui);
+}
+
+- (void)mouseDragged:(NSEvent*)e
+{
+    const NSPoint p = [self panelPoint:e];
+    if (!ui) return;
+    panel_mouse_move(&ui->panel, (float)p.x, (float)p.y, shift_held(e));
+    ui_redraw(ui);
+}
+
+- (void)mouseUp:(NSEvent*)e
+{
+    (void)e;
+    if (!ui) return;
+    panel_mouse_up(&ui->panel);
+    ui_redraw(ui);
+}
+
+- (void)scrollWheel:(NSEvent*)e
+{
+    const NSPoint p = [self panelPoint:e];
+    /* Trackpads report pixels, wheels report lines. */
+    float steps = (float)[e scrollingDeltaY];
+    if ([e hasPreciseScrollingDeltas])
+        steps /= 10.0f;
+    if (!ui || steps == 0.0f) return;
+    panel_wheel(&ui->panel, (float)p.x, (float)p.y, steps, shift_held(e));
+    ui_redraw(ui);
+}
+
+- (void)tick:(NSTimer*)t
+{
+    (void)t;
+    if (ui)
+        ui_redraw(ui);
+}
+
+@end
+
+static int window_open(UI* ui, void* parent)
+{
+    DavidianBiLumenView* v = [[DavidianBiLumenView alloc] initWithFrame:NSMakeRect(0, 0, PANEL_W, PANEL_H)];
+    if (!v)
+        return 0;
+    v->ui = ui;
+    /* Picks up host updates such as the opto lamps, also while a control is being dragged. */
+    v->timer = [NSTimer timerWithTimeInterval:1.0 / 30.0 target:v selector:@selector(tick:) userInfo:nil repeats:YES];
+    [[NSRunLoop currentRunLoop] addTimer:v->timer forMode:NSRunLoopCommonModes];
+    if (parent)
+        [(NSView*)parent addSubview:v];
+    ui->view = v;
+    return 1;
+}
+
+static void window_close(UI* ui)
+{
+    DavidianBiLumenView* v = (DavidianBiLumenView*)ui->view;
+    if (!v)
+        return;
+    [v->timer invalidate]; /* the timer retains the view until then */
+    v->timer = nil;
+    v->ui = NULL;
+    [v removeFromSuperview];
+    [v release];
+    ui->view = NULL;
+}
+
+static void* window_widget(UI* ui) { return ui->view; }
+
+static void ui_redraw(UI* ui)
+{
+    if (ui->panel.dirty && ui->view)
+        [(NSView*)ui->view setNeedsDisplay:YES];
+}
+
+/* The view's own timer drives redraws, so idle has nothing to do. */
+static int window_idle(UI* ui) { ui_redraw(ui); return 0; }
+
 #else
-#    error "No window layer for this platform yet (Windows and X11 are supported)."
+#    error "No window layer for this platform (Windows, macOS and X11 are supported)."
 #endif
 
 /* ---- LV2 UI entry points ---- */

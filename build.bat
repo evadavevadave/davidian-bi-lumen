@@ -4,9 +4,14 @@ rem Builds build\bi_lumen.lv2 and the test programs using Visual Studio's x64 C 
 rem Test programs go in build-test, so build\ holds only the bundle for the LV2 parser to scan.
 setlocal
 set "ROOT=%~dp0"
-set "VCVARS=C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat"
+rem Finds any Visual Studio edition and version with the C++ tools (2017 or later) through
+rem vswhere. Set VCVARS yourself to point at a particular vcvars64.bat instead.
+if not defined VCVARS (
+    set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
+    for /f "usebackq delims=" %%i in (`call "%%VSWHERE%%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2^>nul`) do set "VCVARS=%%i\VC\Auxiliary\Build\vcvars64.bat"
+)
 if not exist "%VCVARS%" (
-    echo Could not find vcvars64.bat. Edit VCVARS in build.bat to match your Visual Studio install.
+    echo Could not find Visual Studio's C++ tools. Install them, or set VCVARS to vcvars64.bat.
     exit /b 1
 )
 call "%VCVARS%" >nul || exit /b 1

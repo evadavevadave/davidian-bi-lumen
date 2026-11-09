@@ -9,9 +9,31 @@
 #include "phasor.h"
 #include "sweep.h"
 
+/* Denormal flushing: decaying signals would otherwise slow the CPU. x86 uses the SSE control
+ * register (FTZ and DAZ bits), 64-bit ARM (Apple silicon, Linux arm64) the FPCR FZ bit. */
 #if defined(_M_X64) || defined(__SSE2__)
 #    include <xmmintrin.h>
 #    define BL_HAS_CSR 1
+typedef unsigned int fpstate;
+static inline fpstate fp_flush_denormals(void)
+{
+    const unsigned int csr = _mm_getcsr();
+    _mm_setcsr(csr | 0x8040);
+    return csr;
+}
+static inline void fp_restore(fpstate s) { _mm_setcsr(s); }
+#elif defined(__aarch64__) && (defined(__GNUC__) || defined(__clang__))
+#    include <stdint.h>
+#    define BL_HAS_CSR 1
+typedef uint64_t fpstate;
+static inline fpstate fp_flush_denormals(void)
+{
+    uint64_t fpcr;
+    __asm__ __volatile__("mrs %0, fpcr" : "=r"(fpcr));
+    __asm__ __volatile__("msr fpcr, %0" : : "r"(fpcr | (UINT64_C(1) << 24)));
+    return fpcr;
+}
+static inline void fp_restore(fpstate s) { __asm__ __volatile__("msr fpcr, %0" : : "r"(s)); }
 #endif
 
 #include "ports.h"
@@ -196,14 +218,13 @@ static void run(LV2_Handle h, uint32_t n)
     uint32_t i;
     int k;
 #ifdef BL_HAS_CSR
-    unsigned int csr;
+    fpstate csr;
 #endif
 
     if (!in_a || !in_b || !out_a || !out_b)
         return;
 #ifdef BL_HAS_CSR
-    csr = _mm_getcsr();
-    _mm_setcsr(csr | 0x8040); /* flush denormals so decaying signals don't slow the CPU */
+    csr = fp_flush_denormals();
 #endif
     targets(p, t);
     update_rates(p, 0);
@@ -254,7 +275,7 @@ static void run(LV2_Handle h, uint32_t n)
         *(float*)p->port[PORT_LED_B] = (float)clampd(led_b / LED_FULL_SCALE, 0.0, 1.0);
 
 #ifdef BL_HAS_CSR
-    _mm_setcsr(csr);
+    fp_restore(csr);
 #endif
 }
 

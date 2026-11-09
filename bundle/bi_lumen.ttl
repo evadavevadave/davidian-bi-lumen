@@ -11,7 +11,7 @@
 	doap:license <https://spdx.org/licenses/GPL-3.0-or-later> ;
 	rdfs:comment "Circuit model of a dual six-stage LDR phaser, from a DIY clone schematic (f.aiseur, rev 002): two phasors with regeneration, two triangle/square sweep generators, opto LED drivers and LDR footswitch bypass. GPL-3.0-or-later. Made with generative AI (Claude Code); see AI_USAGE.md in the bundle." ;
 	lv2:minorVersion 0 ;
-	lv2:microVersion 0 ;
+	lv2:microVersion 2 ;
 	lv2:optionalFeature lv2:hardRTCapable ;
 	lv2:port [
 		a lv2:AudioPort , lv2:InputPort ;

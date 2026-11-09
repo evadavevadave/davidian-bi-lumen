@@ -1,0 +1,114 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Builds, tests and packages the Bi-Lumen bundle for Windows, macOS and Linux.
+# Every push and pull request gets downloadable builds; a v* tag also publishes a release.
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-x64
+            os: windows-latest
+            configure: -A x64
+          - name: macos-universal
+            os: macos-latest
+            # One bundle for Apple silicon and Intel Macs, macOS 10.13 and later.
+            configure: -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13
+          - name: linux-x64
+            # The oldest supported runner, so the binaries run on older glibc versions too.
+            os: ubuntu-22.04
+          - name: linux-arm64
+            os: ubuntu-22.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux packages
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libx11-dev lilv-utils lv2-dev
+
+      - name: Configure
+        shell: bash
+        run: cmake -S . -B build-cmake -DCMAKE_BUILD_TYPE=Release ${{ matrix.configure }}
+
+      - name: Build
+        run: cmake --build build-cmake --config Release
+
+      - name: Test
+        run: ctest --test-dir build-cmake -C Release --output-on-failure
+
+      - name: Check the bundle
+        shell: bash
+        run: |
+          set -e
+          B=build-cmake/bi_lumen.lv2
+          case "$RUNNER_OS" in
+            Windows) EXT=dll; UI=WindowsUI ;;
+            macOS)   EXT=dylib; UI=CocoaUI ;;
+            Linux)   EXT=so; UI=X11UI ;;
+          esac
+          for f in bi_lumen.$EXT bi_lumen_ui.$EXT manifest.ttl bi_lumen.ttl LICENSE NOTICE.md AI_USAGE.md; do
+            test -f "$B/$f" || { echo "missing $f"; exit 1; }
+          done
+          grep -q "ui:$UI" "$B/manifest.ttl"
+          ls -l "$B"
+          if [ "$RUNNER_OS" = macOS ]; then
+            lipo -info "$B/bi_lumen.dylib" "$B/bi_lumen_ui.dylib"
+            otool -l "$B/bi_lumen.dylib" | grep -A3 -E "LC_BUILD_VERSION|LC_VERSION_MIN" | head -8
+          fi
+          if [ "$RUNNER_OS" = Linux ]; then
+            # The lilv LV2 parser, as hosts use it.
+            LV2_PATH="$PWD/build-cmake:/usr/lib/lv2:/usr/lib/$(uname -m)-linux-gnu/lv2" lv2info urn:davidian:bi-lumen | head -30
+            objdump -T "$B/bi_lumen.so" | grep -E "GLIBC_2\.[0-9]+" -o | sort -uV | tail -1
+          fi
+
+      - name: Package
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          case "$GITHUB_REF" in refs/tags/*) ;; *) VERSION="dev-${GITHUB_SHA::7}" ;; esac
+          ZIP="Davidian-Bi-Lumen-${VERSION#v}-${{ matrix.name }}.zip"
+          (cd build-cmake && cmake -E tar cf "../$ZIP" --format=zip bi_lumen.lv2)
+          echo "ZIP=$ZIP" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ env.ZIP }}
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd dist
+          sha256sum *.zip > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+          { cat ../.github/release-notes.md; echo; echo '## SHA-256'; echo; echo '```'; cat SHA256SUMS.txt; echo '```'; } > notes.md
+          gh release create "$GITHUB_REF_NAME" *.zip SHA256SUMS.txt \
+            --title "Davidian Bi-Lumen ${GITHUB_REF_NAME#v}" --notes-file notes.md

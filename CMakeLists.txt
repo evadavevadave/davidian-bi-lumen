@@ -146,7 +146,7 @@ if(BI_LUMEN_AU)
     set(BL_AU_SUBTYPE "Bilm")
     set(BL_AU_FACTORY "DavidianBiLumenAUFactory") # from AUSDK_COMPONENT_ENTRY in au_plugin.cpp
     math(EXPR BL_AU_VERSION_INT "${PROJECT_VERSION_MAJOR} * 65536 + ${PROJECT_VERSION_MINOR} * 256 + ${PROJECT_VERSION_PATCH}")
-    configure_file(src/au/Info.plist.in ${CMAKE_BINARY_DIR}/au/Info.plist @ONLY)
+    configure_file(src/au/Info.plist.in ${CMAKE_BINARY_DIR}/au_plist/Info.plist @ONLY)
 
     add_library(bi_lumen_au MODULE src/au/au_plugin.cpp src/au/au_view.m src/engine.c src/ui/view.c
         ${AUSDK_SOURCES})
@@ -154,7 +154,7 @@ if(BI_LUMEN_AU)
         BUNDLE TRUE
         BUNDLE_EXTENSION component
         OUTPUT_NAME "${BL_AU_NAME}"
-        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_BINARY_DIR}/au/Info.plist
+        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_BINARY_DIR}/au_plist/Info.plist
         C_STANDARD 11
         CXX_STANDARD 20
         CXX_STANDARD_REQUIRED ON

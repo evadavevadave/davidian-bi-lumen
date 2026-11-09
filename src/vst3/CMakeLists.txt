@@ -42,7 +42,8 @@ endif()
 # resource helper does not quote the space in the bundle name.)
 add_custom_command(TARGET bi_lumen_vst3 POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:bi_lumen_vst3>/../Resources"
-    COMMAND ${CMAKE_COMMAND} -E copy ${BL_DOCS} "$<TARGET_FILE_DIR:bi_lumen_vst3>/../Resources/"
+    COMMAND ${CMAKE_COMMAND} -E copy ${BL_DOCS} ${CMAKE_SOURCE_DIR}/licenses/VST3-SDK-MIT.txt
+        "$<TARGET_FILE_DIR:bi_lumen_vst3>/../Resources/"
     # The SDK gives Windows bundles its own logo as a folder icon; that logo is not ours to ship.
     COMMAND ${CMAKE_COMMAND} -E rm -f "$<TARGET_FILE_DIR:bi_lumen_vst3>/../../PlugIn.ico"
         "$<TARGET_FILE_DIR:bi_lumen_vst3>/../../desktop.ini"

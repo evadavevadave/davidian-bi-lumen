@@ -171,7 +171,8 @@ if(BI_LUMEN_AU)
         "-framework CoreAudio" "-framework CoreFoundation" "-framework Cocoa")
     add_custom_command(TARGET bi_lumen_au POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_BUNDLE_CONTENT_DIR:bi_lumen_au>/Resources"
-        COMMAND ${CMAKE_COMMAND} -E copy ${BL_DOCS} "$<TARGET_BUNDLE_CONTENT_DIR:bi_lumen_au>/Resources/"
+        COMMAND ${CMAKE_COMMAND} -E copy ${BL_DOCS} ${CMAKE_SOURCE_DIR}/licenses/Apache-2.0.txt
+            "$<TARGET_BUNDLE_CONTENT_DIR:bi_lumen_au>/Resources/"
         # An ad hoc signature: Apple silicon will not load unsigned code.
         COMMAND codesign --force --sign - "$<TARGET_BUNDLE_DIR:bi_lumen_au>"
         VERBATIM)

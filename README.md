@@ -1,8 +1,16 @@
 # Davidian Bi-Lumen
 
-A Davidian LV2 circuit model of a classic dual opto phaser, simulated part by part from its schematic. It has two six-stage LDR phasors with regeneration, two triangle/square sweep generators, the opto LED drivers, and LDR footswitch bypass. Stereo in and out (A and B), no latency.
+A Davidian circuit model of a classic dual opto phaser, simulated part by part from its schematic. It has two six-stage LDR phasors with regeneration, two triangle/square sweep generators, the opto LED drivers, and LDR footswitch bypass. Stereo in and out (A and B), no latency.
 
-Free software under the GNU GPL, version 3 or later: see [LICENSE](LICENSE), and [NOTICE.md](NOTICE.md) for third-party licences and sources. **Made with generative AI** (Claude Code): see [AI_USAGE.md](AI_USAGE.md). The build copies all three files into the bundle.
+It comes in three plugin formats, all built from the same circuit code and showing the same panel, and they sound identical:
+
+| Format | Platforms |
+|---|---|
+| LV2 | Windows, macOS, Linux |
+| VST3 | Windows |
+| Audio Unit (AUv2) | macOS |
+
+Free software under the GNU GPL, version 3 or later: see [LICENSE](LICENSE), and [NOTICE.md](NOTICE.md) for third-party licences and sources. **Made with generative AI** (Claude Code): see [AI_USAGE.md](AI_USAGE.md). The build copies all three files into every bundle.
 
 ## Build and test on Windows
 
@@ -19,18 +27,36 @@ build-test\ui_check.exe build\bi_lumen.lv2
 
 Ready-made bundles for every platform are on the [Releases page](https://github.com/evadavevadave/davidian-bi-lumen/releases/latest):
 
-| File | For |
-|---|---|
-| `Davidian-Bi-Lumen-<version>-windows-x64.zip` | 64-bit Windows 10 and 11 |
-| `Davidian-Bi-Lumen-<version>-macos-universal.zip` | macOS 10.13 and later, Apple silicon and Intel |
-| `Davidian-Bi-Lumen-<version>-linux-x64.zip` | 64-bit Linux on x86 (glibc 2.29 or later, such as Ubuntu 20.04 or Debian 11; X11 or XWayland for the GUI) |
-| `Davidian-Bi-Lumen-<version>-linux-arm64.zip` | 64-bit Linux on ARM, such as a Raspberry Pi 4 or 5 with a 64-bit OS |
+| File | For | Contains |
+|---|---|---|
+| `Davidian-Bi-Lumen-<version>-windows-x64.zip` | 64-bit Windows 10 and 11 | `Davidian Bi-Lumen.vst3`, `bi_lumen.lv2` |
+| `Davidian-Bi-Lumen-<version>-macos-universal.zip` | macOS 10.13 and later, Apple silicon and Intel | `Davidian Bi-Lumen.component`, `bi_lumen.lv2` |
+| `Davidian-Bi-Lumen-<version>-linux-x64.zip` | 64-bit Linux on x86 (glibc 2.29 or later, such as Ubuntu 20.04 or Debian 11; X11 or XWayland for the GUI) | `bi_lumen.lv2` |
+| `Davidian-Bi-Lumen-<version>-linux-arm64.zip` | 64-bit Linux on ARM, such as a Raspberry Pi 4 or 5 with a 64-bit OS | `bi_lumen.lv2` |
 
 GitHub Actions builds and tests all four from the same source on every push (`.github/workflows/build.yml`), and publishes them when a version is tagged.
 
 ## Install
 
-Unzip the download, or build it yourself (below). Then copy the whole `bi_lumen.lv2` folder (the plugin and GUI libraries, the two .ttl files and the licence files) into one of the standard LV2 folders:
+Unzip the download, or build it yourself (below), and copy the format your host uses. Close the host before copying and restart it afterwards (or rescan its plugins). Replace any older copy instead of keeping two.
+
+### VST3 (Windows)
+
+Copy the whole `Davidian Bi-Lumen.vst3` folder into `C:\Program Files\Common Files\VST3`. Look for **Bi-Lumen** by **Davidian** in your host's plugin list, under Modulation effects. The host's own bypass switch crossfades to the dry signal over 20 ms.
+
+### Audio Unit (macOS)
+
+Copy `Davidian Bi-Lumen.component` into `~/Library/Audio/Plug-Ins/Components` (current user) or `/Library/Audio/Plug-Ins/Components` (all users). It is not notarised, so clear the download quarantine once, in Terminal:
+
+```
+xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/Components/"Davidian Bi-Lumen.component"
+```
+
+It shows up as **Davidian: Bi-Lumen** (manufacturer code `Dvdn`, subtype `Bilm`). Logic Pro lists it under Audio Units > Davidian. It takes a stereo or a mono input and gives a stereo output; a mono input feeds both phasor inputs. If Logic doesn't list it, open Plug-in Manager and rescan, or run `auval -v aufx Bilm Dvdn` in Terminal to see why.
+
+### LV2 (Windows, macOS, Linux)
+
+Copy the whole `bi_lumen.lv2` folder (the plugin and GUI libraries, the two .ttl files and the licence files) into one of the standard LV2 folders:
 
 - Windows: `%APPDATA%\LV2` (current user) or `%COMMONPROGRAMFILES%\LV2` (all users)
 - Linux: `~/.lv2` (current user) or `/usr/local/lib/lv2` (all users)
@@ -42,7 +68,7 @@ On macOS the libraries are not notarised, so macOS quarantines them when the zip
 xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/LV2/bi_lumen.lv2
 ```
 
-If your host doesn't scan that folder, add it to the host's LV2 search path or set the `LV2_PATH` environment variable. Close the host before copying and restart it afterwards. Replace any older copy instead of keeping two: when two bundles have the same URI, the loader uses one and ignores the other.
+If your host doesn't scan that folder, add it to the host's LV2 search path or set the `LV2_PATH` environment variable. Keep only one copy: when two bundles have the same URI, the loader uses one and ignores the other.
 
 Look for **Davidian Bi-Lumen** in your host's plugin list. The plugin URI is `urn:davidian:bi-lumen`. It changed in the 2026-11 rename, so sessions saved before then need the plugin re-inserted.
 
@@ -55,19 +81,33 @@ ctest --test-dir build-cmake -C Release
 cmake --install build-cmake --prefix ~/.lv2 -DLV2_INSTALL_DIR=.
 ```
 
-The last line is optional: it copies the bundle into `~/.lv2` (Linux). Without `-DLV2_INSTALL_DIR=.`, `cmake --install` puts it in `<prefix>/lib/lv2`.
+The last line is optional: it copies the LV2 bundle into `~/.lv2` (Linux). Without `-DLV2_INSTALL_DIR=.`, `cmake --install` puts it in `<prefix>/lib/lv2`.
 
-- **Windows:** Visual Studio 2017 or later with the C++ tools. `build.bat` does the same without CMake and also builds the Windows-only checks.
-- **macOS:** the Xcode command line tools. Add `-DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"` for a universal build.
+- **Windows:** Visual Studio 2017 or later with the C++ tools, and CMake 3.25 or later for the VST3. The VST3 lands in `build-cmake\VST3\Release`. `build.bat` builds the LV2 bundle without CMake and also builds the Windows-only LV2 checks.
+- **macOS:** the Xcode command line tools. The Audio Unit lands in `build-cmake/AU`, signed ad hoc. Add `-DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"` for a universal build.
 - **Linux:** gcc or clang, plus the X11 development headers (`sudo apt install libx11-dev`) for the GUI. Without them CMake builds the plugin alone.
 
-The code is plain C11 (the macOS window layer is compiled as Objective-C) and needs no LV2 SDK or other libraries. The libraries get the right name for each platform (`.dll`, `.so` or `.dylib`), and the manifest names the right GUI type.
+The LV2 build is plain C11 (the macOS window layer is compiled as Objective-C) and needs no LV2 SDK or other libraries. The libraries get the right name for each platform (`.dll`, `.so` or `.dylib`), and the manifest names the right GUI type.
+
+The VST3 and the Audio Unit need their SDKs, which CMake downloads while configuring: the Steinberg VST3 SDK 3.8.1 (MIT) and Apple's AudioUnitSDK 1.2.0 (Apache 2.0). They are on by default on Windows and macOS respectively. Turn them off with `-DBI_LUMEN_VST3=OFF` or `-DBI_LUMEN_AU=OFF`, for example to build offline. `-DBI_LUMEN_VST3=ON` also builds a VST3 on macOS, untested.
+
+`ctest` runs these checks:
+
+- `test_dsp`: the circuit against its transfer function, the sweep rates and ranges, and the built LV2 library.
+- `ui_render`: draws the panel without opening a window.
+- `params_check`: the VST3 and Audio Unit parameters against the LV2 ports and the panel.
+- `vst3_check` (Windows): hosts the VST3, clicks and drags on its editor and checks the edits it reports, then compares its sound with the LV2 build. The VST3 build also runs Steinberg's validator.
+- `au_check` (macOS): loads the Audio Unit from its bundle, compares its sound with the LV2 build (stereo, and mono input), and opens its view. CI also runs Apple's `auval` on it.
+
+Both sound comparisons cover parameter changes and the host's bypass, and expect the output to match the LV2 build exactly.
 
 ## GUI
 
 ![GUI](docs/gui.png)
 
-The bundle includes a native GUI (`bi_lumen_ui`). It has no dependencies: it draws with its own anti-aliased software renderer and stroke font, and shows the result in a Win32 window on Windows (`ui:WindowsUI`), an NSView on macOS (`ui:CocoaUI`) or an X11 window on Linux (`ui:X11UI`). All three share the same drawing and mouse code in `src/ui/panel.h`.
+Every format has the same native GUI. It has no dependencies: it draws with its own anti-aliased software renderer and stroke font, and shows the result in a Win32 window on Windows, an NSView on macOS or an X11 window on Linux (`src/ui/view.c`). The LV2 bundle's GUI is `bi_lumen_ui` (`ui:WindowsUI`, `ui:CocoaUI` or `ui:X11UI`). The VST3 opens it as its editor, and the Audio Unit as its Cocoa view. All of them share the same drawing and mouse code in `src/ui/panel.h`.
+
+In the VST3 and the Audio Unit, every move on the panel is a proper edit for the host, so automation records it.
 
 - Drag a knob up or down to turn it. Hold Shift for fine control. Double-click resets it, and the mouse wheel works too.
 - Click the upper, middle or lower part of a toggle to pick that position.
@@ -100,7 +140,7 @@ The artwork is original, to keep clear of copyright and trade dress. It uses the
 | Center A / B Trim | 0–1 | 0.15 | TR3 / TR4 (the "??" trims). Moves the whole sweep up or down |
 | Volts at 0 dBFS | 0.1–10 | 1.0 | The voltage a full-scale digital signal represents |
 | Output | -24 to +12 dB | 0 dB | Not on the unit |
-| Enabled | on/off | on | Host bypass with a 20 ms crossfade |
+| Enabled | on/off | on | Host bypass with a 20 ms crossfade. In VST3 this is the Bypass parameter, and Audio Units use the host's bypass |
 
 "Sine" is the triangle wave. The LED driver curves it, so the sweep sounds rounded. "Square" is the RC-rounded square. The SW3 labels on the schematic are on the opposite throws: the throw labelled "square" gets the triangle through R118. The plugin names each position by the waveform it actually passes.
 
@@ -152,17 +192,25 @@ These are estimates. Tune them by ear, or measure your own parts:
 | `src/phasor.h` | One phasor's audio path, solved per sample including the feedback loop |
 | `src/opto.h` | LED driver (U11, Q2, D4 network) and LDR model |
 | `src/sweep.h` | Sweep generators, pedal CV, depth pots |
-| `src/plugin.c` | LV2 entry points, routing, controls |
+| `src/engine.c`, `src/engine.h` | Routing, controls and the per-sample loop, behind a small C API that every format uses |
+| `src/plugin.c` | LV2 entry points |
+| `src/vst3/` | The VST3 processor, controller and editor, and its CMake build |
+| `src/au/` | The Audio Unit, its Cocoa view and its Info.plist |
+| `src/params.h` | Parameter names, ranges and text for VST3 and Audio Units, matching the LV2 ports |
 | `src/circuit.h` | Shared constants and op amp clipping |
 | `src/ports.h` | Port numbers shared by the plugin and the GUI |
 | `src/ui/panel.h` | GUI layout, drawing and mouse handling, with no platform code |
 | `src/ui/canvas.h`, `src/ui/font.h` | Software renderer and stroke font |
-| `src/ui/ui_lv2.c` | LV2 UI entry points and the Win32, Cocoa and X11 window layers |
+| `src/ui/view.c`, `src/ui/view.h` | The panel in a Win32, Cocoa or X11 window, for every format |
+| `src/ui/ui_lv2.c` | LV2 UI entry points |
 | `src/lv2_abi.h` | The LV2 C interface, so no SDK is needed |
 | `bundle/` | LV2 metadata |
 | `.github/workflows/build.yml` | Builds, tests and packages Windows, macOS and Linux bundles on GitHub Actions |
 | `LICENSE`, `NOTICE.md`, `AI_USAGE.md` | GPL-3.0 text, third-party licences and sources, AI usage statement |
+| `licenses/` | The VST3 SDK and AudioUnitSDK licences, shipped inside the bundles that use them |
 | `test/test_dsp.c` | Transfer function, sweep rates and sweep range checks, plus tests of the built library |
+| `test/params_check.c` | Checks `params.h` against the TTL and the panel |
+| `test/vst3_check.cpp`, `test/au_check.m`, `test/compare.h` | Host the VST3 and the Audio Unit and compare their sound with the LV2 build |
 | `test/lilv_check.c` | Checks the bundle with the lilv LV2 parser (Windows only) |
 | `test/ui_check.c` | Hosts the built GUI and drives it with mouse messages (Windows only) |
 | `test/ui_render.c` | Renders the panel to a .bmp file |
@@ -175,4 +223,4 @@ These are estimates. Tune them by ear, or measure your own parts:
 
 ## Licence
 
-Copyright (C) 2026 Davidian. Released under the GNU General Public License, version 3 or (at your option) any later version. Every source file carries an `SPDX-License-Identifier` line. `src/lv2_abi.h` is under the ISC licence, which is GPL-compatible, because it reproduces the LV2 interface declarations. [NOTICE.md](NOTICE.md) lists every licence and source. [AI_USAGE.md](AI_USAGE.md) says how AI was used.
+Copyright (C) 2026 Davidian. Released under the GNU General Public License, version 3 or (at your option) any later version. Every source file carries an `SPDX-License-Identifier` line. `src/lv2_abi.h` is under the ISC licence, which is GPL-compatible, because it reproduces the LV2 interface declarations. The VST3 plugin includes code from the Steinberg VST3 SDK (MIT) and the Audio Unit from Apple's AudioUnitSDK (Apache 2.0), both GPL-3.0-compatible. [NOTICE.md](NOTICE.md) lists every licence and source. VST is a registered trademark of Steinberg Media Technologies GmbH. [AI_USAGE.md](AI_USAGE.md) says how AI was used.

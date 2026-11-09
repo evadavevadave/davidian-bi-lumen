@@ -29,13 +29,31 @@ AI was used to make this software. See [AI_USAGE.md](AI_USAGE.md).
 
 ISC is compatible with the GPL, so the combined work is distributed under GPL-3.0-or-later.
 
+### Steinberg VST3 SDK (MIT), in the VST3 plugin
+
+The VST3 build compiles parts of the Steinberg VST3 SDK 3.8.1 (`base`, `pluginterfaces`, `public.sdk`) into `Davidian Bi-Lumen.vst3`. CMake downloads the SDK while configuring; it is not stored in this repository. The tests also use its hosting classes and validator.
+
+- Copyright (c) 2026, Steinberg Media Technologies GmbH
+- Licence: MIT. The full text is in [licenses/VST3-SDK-MIT.txt](licenses/VST3-SDK-MIT.txt), and the build copies it into the VST3 bundle's `Contents/Resources`.
+
+The build leaves out the SDK's default folder icon, which is Steinberg's VST logo.
+
+### Apple AudioUnitSDK (Apache 2.0), in the Audio Unit
+
+The Audio Unit build compiles Apple's AudioUnitSDK 1.2.0 (the AUBase and AUEffectBase classes and their helpers, unmodified) into `Davidian Bi-Lumen.component`. CMake downloads the SDK while configuring; it is not stored in this repository.
+
+- Copyright © 2000-2023 Apple Inc.
+- Licence: Apache License 2.0. The full text is in [licenses/Apache-2.0.txt](licenses/Apache-2.0.txt), and the build copies it into the component's `Contents/Resources`. The SDK has no NOTICE file.
+
+MIT and Apache 2.0 are both compatible with GPL version 3, so the VST3 plugin and the Audio Unit are distributed under GPL-3.0-or-later as combined works.
+
 ### Used by the build but not included
 
 | Component | Licence | How it is used |
 |---|---|---|
-| Microsoft C runtime | Microsoft Visual Studio licence | Linked statically into the Windows DLLs by `build.bat` (`/MT`). It is a system library under GPL-3.0 section 1. |
+| Microsoft C and C++ runtimes | Microsoft Visual Studio licence | Linked statically into the Windows DLLs and the VST3 plugin (`/MT`). They are system libraries under GPL-3.0 section 1. |
 | Xlib (libX11) | MIT/X11 | Linked dynamically by the Linux GUI. |
-| Cocoa, Core Graphics | Apple system frameworks | Linked dynamically by the macOS GUI. |
+| Cocoa, Core Graphics, AudioToolbox, AudioUnit, CoreAudio, libc++ | Apple system frameworks | Linked dynamically by the macOS GUI and the Audio Unit. |
 | GitHub Actions (actions/checkout, upload-artifact, download-artifact) | MIT | Used to build the release bundles. Not shipped. |
 | lilv, from the Ardour 9 install | ISC | Loaded at run time by `test/lilv_check.c` only. Not shipped in the bundle. |
 | Win32 user32/gdi32, C maths library | System libraries | Linked dynamically. |
@@ -44,5 +62,5 @@ ISC is compatible with the GPL, so the combined work is distributed under GPL-3.
 
 - **Circuit:** the model follows the component values and topology of a DIY clone schematic by f.aiseur (V002, Rev 002, 2025-01-25). Component values and circuit topology are facts used to write an original simulation. None of the schematic image is included in this repository or the bundle, and the copy used during development has been deleted.
 - **Published figures:** rate ranges, input impedance and pedal voltage come from the original unit's owner's manual and a 1978 magazine article (linked in the README). Only those figures were used, and no text or images from them are included.
-- **Trademarks:** the original hardware's brand and model names are trademarks of their owners. They are not used in the plugin's name, URI, files or GUI, and Davidian is not affiliated with them. "Bi-Lumen" is an original name.
+- **Trademarks:** the original hardware's brand and model names are trademarks of their owners. They are not used in the plugin's name, URI, files or GUI, and Davidian is not affiliated with them. "Bi-Lumen" is an original name. VST is a registered trademark of Steinberg Media Technologies GmbH. Audio Units and macOS are trademarks of Apple Inc. They name the plugin formats only; Davidian is not affiliated with either company.
 - **GUI design:** original. It does not copy the original unit's logo, wordmark, lettering or panel artwork.

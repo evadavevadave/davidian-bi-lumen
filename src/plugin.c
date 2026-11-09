@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
  * Copyright (C) 2026 Davidian. See LICENSE and NOTICE.md. */
 /* LV2 entry points for the Bi-Lumen. The circuit itself is in engine.c. */
+#include <stddef.h>
+
 #include "engine.h"
 #include "lv2_abi.h"
 

@@ -67,7 +67,7 @@ jobs:
           ls -l "$B"
           if [ "$RUNNER_OS" = Windows ]; then
             V="build-cmake/VST3/Release/Davidian Bi-Lumen.vst3"
-            for f in "x86_64-win/Davidian Bi-Lumen.vst3" Resources/moduleinfo.json Resources/LICENSE Resources/NOTICE.md Resources/AI_USAGE.md; do
+            for f in "x86_64-win/Davidian Bi-Lumen.vst3" Resources/moduleinfo.json Resources/LICENSE Resources/NOTICE.md Resources/AI_USAGE.md Resources/VST3-SDK-MIT.txt; do
               test -f "$V/Contents/$f" || { echo "missing VST3 $f"; exit 1; }
             done
             ls -lR "$V"
@@ -76,7 +76,7 @@ jobs:
             lipo -info "$B/bi_lumen.dylib" "$B/bi_lumen_ui.dylib"
             otool -l "$B/bi_lumen.dylib" | grep -A3 -E "LC_BUILD_VERSION|LC_VERSION_MIN" | head -8
             C="build-cmake/AU/Davidian Bi-Lumen.component"
-            for f in Info.plist "MacOS/Davidian Bi-Lumen" Resources/LICENSE Resources/NOTICE.md Resources/AI_USAGE.md; do
+            for f in Info.plist "MacOS/Davidian Bi-Lumen" Resources/LICENSE Resources/NOTICE.md Resources/AI_USAGE.md Resources/Apache-2.0.txt; do
               test -f "$C/Contents/$f" || { echo "missing AU $f"; exit 1; }
             done
             lipo -info "$C/Contents/MacOS/Davidian Bi-Lumen"

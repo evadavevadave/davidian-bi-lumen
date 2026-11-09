@@ -69,6 +69,8 @@ if(NOT MSVC)
     target_link_libraries(bi_lumen PRIVATE m)
     target_link_libraries(test_dsp PRIVATE m)
     target_link_libraries(ui_render PRIVATE m)
+    # ui_render draws the panel but has no mouse, so the input handlers go unused there.
+    target_compile_options(ui_render PRIVATE -Wno-unused-function)
 endif()
 
 # The manifest names the Windows libraries and UI type, so other platforms get theirs.

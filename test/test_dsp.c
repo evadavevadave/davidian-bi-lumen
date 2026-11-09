@@ -562,7 +562,7 @@ static void test_plugin(const char* bundle)
 
     /* Reverse sync: with both phasors on Gen 1 from the same input, the levels move apart. */
     {
-        double fwd, rev;
+        double fwd = 0.0, rev = 0.0;
         long i;
         for (r = 0; r < 2; ++r) {
             double c = 0.0, sa = 0.0, sb = 0.0, ma = 0.0, mb = 0.0;

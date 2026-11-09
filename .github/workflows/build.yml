@@ -34,7 +34,7 @@ jobs:
           - name: linux-arm64
             os: ubuntu-22.04-arm
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Linux packages
         if: runner.os == 'Linux'
@@ -70,9 +70,10 @@ jobs:
             otool -l "$B/bi_lumen.dylib" | grep -A3 -E "LC_BUILD_VERSION|LC_VERSION_MIN" | head -8
           fi
           if [ "$RUNNER_OS" = Linux ]; then
-            # The lilv LV2 parser, as hosts use it.
-            LV2_PATH="$PWD/build-cmake:/usr/lib/lv2:/usr/lib/$(uname -m)-linux-gnu/lv2" lv2info urn:davidian:bi-lumen | head -30
-            objdump -T "$B/bi_lumen.so" | grep -E "GLIBC_2\.[0-9]+" -o | sort -uV | tail -1
+            # The lilv LV2 parser, as hosts use it, on a folder holding only this bundle.
+            mkdir -p "$RUNNER_TEMP/lv2" && cp -r "$B" "$RUNNER_TEMP/lv2/"
+            LV2_PATH="$RUNNER_TEMP/lv2:/usr/lib/lv2:/usr/lib/$(uname -m)-linux-gnu/lv2" lv2info urn:davidian:bi-lumen | head -30
+            objdump -T "$B/bi_lumen.so" "$B/bi_lumen_ui.so" | grep -E "GLIBC_2\.[0-9]+" -o | sort -uV | tail -1
           fi
 
       - name: Package
@@ -84,7 +85,7 @@ jobs:
           (cd build-cmake && cmake -E tar cf "../$ZIP" --format=zip bi_lumen.lv2)
           echo "ZIP=$ZIP" >> "$GITHUB_ENV"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.name }}
           path: ${{ env.ZIP }}
@@ -97,8 +98,8 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true

@@ -23,7 +23,7 @@ Ready-made bundles for every platform are on the [Releases page](https://github.
 |---|---|
 | `Davidian-Bi-Lumen-<version>-windows-x64.zip` | 64-bit Windows 10 and 11 |
 | `Davidian-Bi-Lumen-<version>-macos-universal.zip` | macOS 10.13 and later, Apple silicon and Intel |
-| `Davidian-Bi-Lumen-<version>-linux-x64.zip` | 64-bit Linux on x86 (glibc 2.35 or later, X11 or XWayland for the GUI) |
+| `Davidian-Bi-Lumen-<version>-linux-x64.zip` | 64-bit Linux on x86 (glibc 2.29 or later, such as Ubuntu 20.04 or Debian 11; X11 or XWayland for the GUI) |
 | `Davidian-Bi-Lumen-<version>-linux-arm64.zip` | 64-bit Linux on ARM, such as a Raspberry Pi 4 or 5 with a 64-bit OS |
 
 GitHub Actions builds and tests all four from the same source on every push (`.github/workflows/build.yml`), and publishes them when a version is tagged.

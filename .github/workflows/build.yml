@@ -29,7 +29,7 @@ jobs:
             # One bundle for Apple silicon and Intel Macs, macOS 10.13 and later.
             configure: -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13
           - name: linux-x64
-            # The oldest supported runner, so the binaries run on older glibc versions too.
+            # The oldest supported runner. The libraries need only glibc 2.29 (Ubuntu 20.04, Debian 11).
             os: ubuntu-22.04
           - name: linux-arm64
             os: ubuntu-22.04-arm

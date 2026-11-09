@@ -6,7 +6,7 @@ Ready-made **Davidian Bi-Lumen** bundles for Windows, macOS and Linux, built and
 |---|---|
 | `...-windows-x64.zip` | 64-bit Windows 10 and 11 |
 | `...-macos-universal.zip` | macOS 10.13 and later, Apple silicon and Intel |
-| `...-linux-x64.zip` | 64-bit Linux on x86 (glibc 2.35 or later) |
+| `...-linux-x64.zip` | 64-bit Linux on x86 (glibc 2.29 or later, such as Ubuntu 20.04 or Debian 11) |
 | `...-linux-arm64.zip` | 64-bit Linux on ARM, such as a Raspberry Pi 4 or 5 |
 
 ## Install

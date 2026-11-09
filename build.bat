@@ -24,12 +24,12 @@ if not exist "%TESTS%" mkdir "%TESTS%"
 pushd "%TESTS%" || exit /b 1
 
 rem /MT links the C runtime statically, so hosts don't need a redistributable installed.
-cl /nologo /std:c11 /O2 /fp:precise /MT /W4 /LD "%ROOT%src\plugin.c" /Fo"%TESTS%\\" /Fe"%BUNDLE%\bi_lumen.dll" /link /NOLOGO /NOIMPLIB /NOEXP
+cl /nologo /std:c11 /O2 /fp:precise /MT /W4 /LD "%ROOT%src\plugin.c" "%ROOT%src\engine.c" /Fo"%TESTS%\\" /Fe"%BUNDLE%\bi_lumen.dll" /link /NOLOGO /NOIMPLIB /NOEXP
 if errorlevel 1 (popd & exit /b 1)
 del /q "%BUNDLE%\bi_lumen.lib" "%BUNDLE%\bi_lumen.exp" 2>nul
 
 rem The GUI: a Win32 window drawn by its own software renderer.
-cl /nologo /std:c11 /O2 /MT /W4 /LD "%ROOT%src\ui\ui_lv2.c" /Fo"%TESTS%\\" /Fe"%BUNDLE%\bi_lumen_ui.dll" /link /NOLOGO /NOIMPLIB /NOEXP user32.lib gdi32.lib
+cl /nologo /std:c11 /O2 /MT /W4 /LD "%ROOT%src\ui\ui_lv2.c" "%ROOT%src\ui\view.c" /Fo"%TESTS%\\" /Fe"%BUNDLE%\bi_lumen_ui.dll" /link /NOLOGO /NOIMPLIB /NOEXP user32.lib gdi32.lib
 if errorlevel 1 (popd & exit /b 1)
 del /q "%BUNDLE%\bi_lumen_ui.lib" "%BUNDLE%\bi_lumen_ui.exp" 2>nul
 

@@ -65,9 +65,23 @@ jobs:
           done
           grep -q "ui:$UI" "$B/manifest.ttl"
           ls -l "$B"
+          if [ "$RUNNER_OS" = Windows ]; then
+            V="build-cmake/VST3/Release/Davidian Bi-Lumen.vst3"
+            for f in "x86_64-win/Davidian Bi-Lumen.vst3" Resources/moduleinfo.json Resources/LICENSE Resources/NOTICE.md Resources/AI_USAGE.md; do
+              test -f "$V/Contents/$f" || { echo "missing VST3 $f"; exit 1; }
+            done
+            ls -lR "$V"
+          fi
           if [ "$RUNNER_OS" = macOS ]; then
             lipo -info "$B/bi_lumen.dylib" "$B/bi_lumen_ui.dylib"
             otool -l "$B/bi_lumen.dylib" | grep -A3 -E "LC_BUILD_VERSION|LC_VERSION_MIN" | head -8
+            C="build-cmake/AU/Davidian Bi-Lumen.component"
+            for f in Info.plist "MacOS/Davidian Bi-Lumen" Resources/LICENSE Resources/NOTICE.md Resources/AI_USAGE.md; do
+              test -f "$C/Contents/$f" || { echo "missing AU $f"; exit 1; }
+            done
+            lipo -info "$C/Contents/MacOS/Davidian Bi-Lumen"
+            codesign --verify --verbose "$C"
+            plutil -p "$C/Contents/Info.plist"
           fi
           if [ "$RUNNER_OS" = Linux ]; then
             # The lilv LV2 parser, as hosts use it, on a folder holding only this bundle.
@@ -76,13 +90,34 @@ jobs:
             objdump -T "$B/bi_lumen.so" "$B/bi_lumen_ui.so" | grep -E "GLIBC_2\.[0-9]+" -o | sort -uV | tail -1
           fi
 
+      - name: Validate the Audio Unit with auval
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -e
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R "build-cmake/AU/Davidian Bi-Lumen.component" ~/Library/Audio/Plug-Ins/Components/
+          killall -9 AudioComponentRegistrar 2>/dev/null || true
+          for i in $(seq 1 15); do auval -a 2>/dev/null | grep -q "Bilm Dvdn" && break; sleep 2; done
+          auval -a | grep "Dvdn"
+          auval -strict -v aufx Bilm Dvdn
+          # The Intel half of the universal binary, through Rosetta.
+          softwareupdate --install-rosetta --agree-to-license >/dev/null 2>&1 || true
+          arch -x86_64 auval -strict -v aufx Bilm Dvdn | tail -25
+
       - name: Package
         shell: bash
         run: |
           VERSION="${GITHUB_REF_NAME}"
           case "$GITHUB_REF" in refs/tags/*) ;; *) VERSION="dev-${GITHUB_SHA::7}" ;; esac
           ZIP="Davidian-Bi-Lumen-${VERSION#v}-${{ matrix.name }}.zip"
-          (cd build-cmake && cmake -E tar cf "../$ZIP" --format=zip bi_lumen.lv2)
+          # Every format built for this platform, side by side at the top of the zip.
+          mkdir stage && cp -R build-cmake/bi_lumen.lv2 stage/
+          case "$RUNNER_OS" in
+            Windows) cp -R "build-cmake/VST3/Release/Davidian Bi-Lumen.vst3" stage/ ;;
+            macOS) cp -R "build-cmake/AU/Davidian Bi-Lumen.component" stage/ ;;
+          esac
+          (cd stage && cmake -E tar cf "../$ZIP" --format=zip -- *)
           echo "ZIP=$ZIP" >> "$GITHUB_ENV"
 
       - uses: actions/upload-artifact@v7

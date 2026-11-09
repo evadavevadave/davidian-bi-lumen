@@ -8,6 +8,7 @@
 #import <AudioToolbox/AudioToolbox.h>
 #import <AudioUnit/AUCocoaUIView.h>
 #import <Cocoa/Cocoa.h>
+#import <objc/runtime.h>
 
 #include <stdio.h>
 
@@ -119,6 +120,12 @@ static void test_view(AudioUnit au)
         return;
     bundle = [NSBundle bundleWithURL:(NSURL*)info.mCocoaAUViewBundleLocation];
     factory_class = bundle ? [bundle classNamed:(NSString*)info.mCocoaAUViewClass[0]] : nil;
+    if (!factory_class) {
+        Class any = NSClassFromString((NSString*)info.mCocoaAUViewClass[0]);
+        printf("  lookup: class %s, bundle %s, loaded %d, executable %s, class image %s\n",
+               [(NSString*)info.mCocoaAUViewClass[0] UTF8String], [[bundle bundlePath] UTF8String], (int)[bundle isLoaded],
+               [[bundle executablePath] UTF8String], any ? class_getImageName(any) : "(no such class)");
+    }
     check("view factory class is in the bundle", factory_class != nil);
     check("view factory follows AUCocoaUIBase",
           factory_class && [factory_class conformsToProtocol:@protocol(AUCocoaUIBase)]);
